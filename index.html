@@ -672,9 +672,10 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 space-y-2">
                     <div class="flex items-center justify-between gap-2">
-                      <label for="set-video-file" class="block text-xs font-bold text-slate-700">File Video Otomatis (MP4/WebM, Maks. 100 MB)</label>
+                      <label for="set-video-file" class="block text-xs font-bold text-slate-700">Video Otomatis (Link Online / File Lokal Maks. 100 MB)</label>
                       <button type="button" onclick="clearCustomVideo()" class="text-[11px] font-bold text-rose-600 hover:underline">Hapus Video</button>
                     </div>
+                    <input type="url" id="set-video-url-input" placeholder="Tempel Link Video MP4 / YouTube agar sinkron ke semua HP & Laptop" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs" />
                     <input type="file" id="set-video-file" accept="video/*" class="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                     <p id="set-video-status" class="text-[11px] text-slate-500 truncate">Menggunakan video bawaan (Maks. 100 MB)</p>
                   </div>
@@ -1962,6 +1963,33 @@
     function ensureAutoVideoPlays() {
       const vid = document.getElementById('beranda-auto-video');
       if (!vid) return;
+      const container = vid.parentElement;
+      const remoteUrl = (state.settings.videoUrl || '').trim();
+      const ytMatch = remoteUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+
+      if (ytMatch && container) {
+        const ytId = ytMatch[1];
+        const embedSrc = `https://www.youtube.com/embed/${ytId}?autoplay=1&loop=1&playlist=${ytId}&mute=${videoSoundEnabled ? 0 : 1}`;
+        let iframe = container.querySelector('iframe.yt-beranda-frame');
+        vid.classList.add('hidden');
+        vid.pause();
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.className = 'yt-beranda-frame w-full h-full border-0';
+          iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+          iframe.allowFullscreen = true;
+          container.appendChild(iframe);
+        }
+        if (iframe.getAttribute('src') !== embedSrc) {
+          iframe.setAttribute('src', embedSrc);
+        }
+        return;
+      } else if (container) {
+        const oldIframe = container.querySelector('iframe.yt-beranda-frame');
+        if (oldIframe) oldIframe.remove();
+        vid.classList.remove('hidden');
+      }
+
       if (typeof state.settings.videoUrl === 'string' && state.settings.videoUrl.startsWith('blob:') && state.settings.videoUrl !== cachedCustomVideoObjectUrl) {
         state.settings.videoUrl = '';
       }
@@ -1984,25 +2012,30 @@
         updateVideoAudioButton();
       };
 
+      if (remoteUrl && !remoteUrl.startsWith('blob:')) {
+        playTarget(remoteUrl);
+        return;
+      }
+
       if (cachedCustomVideoObjectUrl) {
         playTarget(cachedCustomVideoObjectUrl);
         return;
       }
 
-      if (state.settings.videoStorage === 'indexeddb' || state.settings.videoName) {
+      if (state.settings.videoStorage === 'indexeddb') {
         loadCustomVideoBlobFromDb().then((record) => {
           if (record && record.blob) {
             if (cachedCustomVideoObjectUrl) URL.revokeObjectURL(cachedCustomVideoObjectUrl);
             cachedCustomVideoObjectUrl = URL.createObjectURL(record.blob);
             playTarget(cachedCustomVideoObjectUrl);
           } else {
-            playTarget(state.settings.videoUrl || createFallbackVideoDataUrl());
+            playTarget(createFallbackVideoDataUrl());
           }
         });
         return;
       }
 
-      playTarget(state.settings.videoUrl || createFallbackVideoDataUrl());
+      playTarget(createFallbackVideoDataUrl());
     }
 
     function updateVideoAudioButton() {
@@ -2077,12 +2110,12 @@
         cachedCustomVideoObjectUrl = URL.createObjectURL(file);
         state.settings.videoUrl = '';
         state.settings.videoStorage = 'indexeddb';
-        state.settings.videoName = `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+        state.settings.videoName = `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB) — Khusus Perangkat Ini`;
         saveState();
         renderSettingsForm();
         ensureAutoVideoPlays();
         updateVideoAudioButton();
-        showToast(`Video berhasil disimpan (${(file.size / (1024 * 1024)).toFixed(1)} MB).`);
+        showToast('Video lokal disimpan. Untuk sinkron ke semua HP/laptop, tempel Link Video di kolom atasnya.');
       } catch (err) {
         showToast('Gagal menyimpan video ke penyimpanan browser.');
       }
@@ -2877,6 +2910,7 @@
       const tEl = document.getElementById('set-beranda-title');
       const bEl = document.getElementById('set-beranda-body');
       const aEl = document.getElementById('set-kop-address');
+      const vUrlEl = document.getElementById('set-video-url-input');
       const vStatus = document.getElementById('set-video-status');
       const pStatus = document.getElementById('set-photo-status');
       const admUserEl = document.getElementById('set-admin-username');
@@ -2890,9 +2924,10 @@
       if (tEl) tEl.value = state.settings.berandaTitle || '';
       if (bEl) bEl.value = state.settings.berandaBody || '';
       if (aEl) aEl.value = state.settings.kopAddress || '';
+      if (vUrlEl) vUrlEl.value = state.settings.videoUrl || '';
       if (admUserEl) admUserEl.value = state.adminAuth?.username || SINGLE_ADMIN.username;
       if (admPassEl) admPassEl.value = state.adminAuth?.password || SINGLE_ADMIN.password;
-      if (vStatus) vStatus.textContent = state.settings.videoName ? `Aktif: ${state.settings.videoName}` : 'Menggunakan video bawaan';
+      if (vStatus) vStatus.textContent = state.settings.videoName ? `Aktif: ${state.settings.videoName}` : 'Menggunakan video bawaan (Maks. 100 MB)';
       if (pStatus) {
         const count = Array.isArray(state.settings.photos) ? state.settings.photos.length : 0;
         pStatus.textContent = `Aktif: ${count} foto galeri`;
@@ -3015,11 +3050,20 @@
       state.settings.berandaTitle = document.getElementById('set-beranda-title')?.value.trim() || DEFAULT_STATE.settings.berandaTitle;
       state.settings.berandaBody = document.getElementById('set-beranda-body')?.value.trim() || DEFAULT_STATE.settings.berandaBody;
       state.settings.kopAddress = document.getElementById('set-kop-address')?.value.trim() || DEFAULT_STATE.settings.kopAddress;
+      const newVideoUrl = document.getElementById('set-video-url-input')?.value.trim() || '';
+      if (newVideoUrl) {
+        state.settings.videoUrl = newVideoUrl;
+        state.settings.videoStorage = 'url';
+        state.settings.videoName = 'Link Video Cloud';
+      } else if (state.settings.videoStorage === 'url') {
+        state.settings.videoUrl = '';
+        state.settings.videoName = '';
+      }
       saveState();
       renderAppLogos();
       renderBeranda();
       renderSettingsForm();
-      showToast('Setelan berhasil disimpan.');
+      showToast('Setelan berhasil disimpan & disinkronkan.');
     });
 
     function sanitizePdfText(text) {
