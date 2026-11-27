@@ -174,6 +174,9 @@
           <button type="button" id="nav-mahasiswa" data-tab="mahasiswa" onclick="switchTab('mahasiswa')" class="nav-item hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold text-slate-700 hover:bg-slate-100 text-left transition">
             <span>🎓</span><span>Data Mahasiswa</span>
           </button>
+          <button type="button" id="nav-struktural" data-tab="struktural" onclick="switchTab('struktural')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold text-slate-700 hover:bg-slate-100 text-left transition">
+            <span>🏛️</span><span>Struktural & Profil UPZ</span>
+          </button>
           <button type="button" id="nav-profil" data-tab="profil" onclick="switchTab('profil')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold text-slate-700 hover:bg-slate-100 text-left transition">
             <span>👤</span><span>Profil</span>
           </button>
@@ -505,6 +508,114 @@
           <div id="members-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
+        <!-- STRUKTURAL, MOTO, JARGON & VISI MISI -->
+        <section id="panel-struktural" class="hidden space-y-6">
+          <!-- Moto & Jargon -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="glass-card rounded-3xl p-5 space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <div>
+                  <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">Identitas</span>
+                  <h4 class="text-base font-extrabold text-slate-900 mt-1">Moto UPZ UNPAM</h4>
+                </div>
+                <button type="button" id="btn-delete-moto" onclick="deleteMoto()" class="hidden px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition">
+                  Hapus Moto
+                </button>
+              </div>
+              <div id="view-moto-box" class="rounded-2xl bg-slate-50 border border-slate-200/80 p-4 text-sm font-semibold text-slate-800 italic">
+                Belum ada moto yang ditetapkan.
+              </div>
+              <form id="admin-moto-form" class="hidden space-y-2.5 pt-2 border-t border-slate-100">
+                <input type="text" id="input-moto" required placeholder="Tulis Moto UPZ UNPAM..." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+                <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition">
+                  Simpan / Perbarui Moto
+                </button>
+              </form>
+            </div>
+
+            <div class="glass-card rounded-3xl p-5 space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <div>
+                  <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700">Semangat</span>
+                  <h4 class="text-base font-extrabold text-slate-900 mt-1">Jargon UPZ UNPAM</h4>
+                </div>
+                <button type="button" id="btn-delete-jargon" onclick="deleteJargon()" class="hidden px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition">
+                  Hapus Jargon
+                </button>
+              </div>
+              <div id="view-jargon-box" class="rounded-2xl bg-slate-50 border border-slate-200/80 p-4 text-sm font-extrabold text-teal-900">
+                Belum ada jargon yang ditetapkan.
+              </div>
+              <form id="admin-jargon-form" class="hidden space-y-2.5 pt-2 border-t border-slate-100">
+                <input type="text" id="input-jargon" required placeholder="Tulis Jargon UPZ UNPAM..." class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+                <button type="submit" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition">
+                  Simpan / Perbarui Jargon
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Visi & Misi -->
+          <div class="glass-card rounded-3xl p-5 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h4 class="text-base font-extrabold text-slate-900">Visi & Misi UPZ Universitas Pamulang</h4>
+                <p class="text-xs text-slate-500">Arah tujuan dan komitmen pelayanan UPZ UNPAM</p>
+              </div>
+              <div id="admin-visimisi-actions" class="hidden flex items-center gap-2">
+                <button type="button" onclick="deleteVisi()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition">
+                  Hapus Visi
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div class="lg:col-span-5 rounded-2xl bg-indigo-50/70 border border-indigo-100 p-4 space-y-2">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-800">Visi</div>
+                <p id="view-visi-text" class="text-sm font-semibold text-slate-800 leading-relaxed">
+                  Belum ada visi yang ditetapkan.
+                </p>
+                <form id="admin-visi-form" class="hidden space-y-2 pt-2 border-t border-indigo-200/70">
+                  <textarea id="input-visi" rows="3" required placeholder="Tulis Visi UPZ UNPAM..." class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"></textarea>
+                  <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition">
+                    Simpan / Perbarui Visi
+                  </button>
+                </form>
+              </div>
+
+              <div class="lg:col-span-7 rounded-2xl bg-teal-50/60 border border-teal-100 p-4 space-y-2.5">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-teal-800">Misi</div>
+                <ol id="view-misi-list" class="list-decimal list-inside space-y-1.5 text-sm font-medium text-slate-800"></ol>
+                <form id="admin-misi-form" class="hidden flex flex-col sm:flex-row gap-2 pt-2 border-t border-teal-200/70">
+                  <input type="text" id="input-misi-item" required placeholder="Tambah poin misi baru..." class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
+                  <button type="submit" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shrink-0">
+                    + Tambah Misi
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Struktural Organisasi -->
+          <div class="glass-card rounded-3xl p-5 space-y-4">
+            <div>
+              <h4 class="text-base font-extrabold text-slate-900">Struktural Pengurus UPZ UNPAM</h4>
+              <p class="text-xs text-slate-500">Susunan jabatan dan pengurus aktif Unit Pengumpul Zakat Universitas Pamulang</p>
+            </div>
+
+            <form id="admin-struktural-form" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pb-4 border-b border-slate-100">
+              <input type="text" id="struct-jabatan" required placeholder="Jabatan (mis. Ketua UPZ)" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+              <input type="text" id="struct-nama" required placeholder="Nama Lengkap & Gelar" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+              <input type="text" id="struct-bidang" placeholder="Divisi / Keterangan (Opsional)" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+              <button type="submit" class="rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold py-2.5 px-4 transition">
+                + Tambah Pengurus
+              </button>
+            </form>
+
+            <div id="struktural-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+          </div>
+        </section>
+
         <!-- PROFIL -->
         <section id="panel-profil" class="hidden space-y-5">
           <div id="profil-card-wrap" class="glass-card rounded-3xl p-5 sm:p-6"></div>
@@ -770,6 +881,56 @@
     </div>
   </div>
 
+  <!-- Modal Edit Pengurus Struktural -->
+  <div id="struktural-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h4 class="text-base font-extrabold text-slate-900">Edit Data Struktural</h4>
+        <button type="button" onclick="closeStrukturalModal()" class="p-1.5 rounded-xl text-slate-500 hover:bg-slate-100">✕</button>
+      </div>
+      <form id="struktural-edit-form" class="space-y-3">
+        <input type="hidden" id="edit-struct-id" />
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Jabatan</label>
+          <input type="text" id="edit-struct-jabatan" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Nama Pengurus</label>
+          <input type="text" id="edit-struct-nama" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Divisi / Keterangan</label>
+          <input type="text" id="edit-struct-bidang" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeStrukturalModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Batal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-700 text-xs font-bold text-white">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Edit Poin Misi -->
+  <div id="misi-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h4 class="text-base font-extrabold text-slate-900">Edit Poin Misi</h4>
+        <button type="button" onclick="closeMisiModal()" class="p-1.5 rounded-xl text-slate-500 hover:bg-slate-100">✕</button>
+      </div>
+      <form id="misi-edit-form" class="space-y-3">
+        <input type="hidden" id="edit-misi-index" />
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Isi Misi</label>
+          <textarea id="edit-misi-text" rows="3" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeMisiModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Batal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-teal-600 text-xs font-bold text-white">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Firebase SDK untuk Sinkronisasi Cloud Real-Time Antar-Perangkat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -885,7 +1046,22 @@
         }
       ],
       schedules: [],
-      customFeatures: []
+      customFeatures: [],
+      organizationProfile: {
+        moto: 'Amanah dalam Mengelola, Tepat dalam Menyalurkan, Berkah untuk Umat.',
+        jargon: 'UPZ UNPAM: Berbagi Zakat, Menguatkan Umat, Membangun Peradaban!',
+        visi: 'Menjadi Unit Pengumpul Zakat kampus yang amanah, profesional, transparan, dan berdampak luas bagi kesejahteraan sivitas akademika dan masyarakat.',
+        misi: [
+          'Mengoptimalkan penghimpunan zakat, infaq, dan sedekah di lingkungan Universitas Pamulang.',
+          'Menyalurkan dana ZIS secara tepat sasaran melalui program pendidikan, sosial, dan pemberdayaan.',
+          'Menerapkan tata kelola administrasi yang akuntabel, transparan, dan berbasis digital.'
+        ],
+        struktural: [
+          { id: 'st1', jabatan: 'Ketua UPZ UNPAM', nama: 'Dr. H. Ahmad Sutrisno, M.Ag.', bidang: 'Pimpinan Umum' },
+          { id: 'st2', jabatan: 'Sekretaris', nama: 'Nurul Hidayah, S.E., M.M.', bidang: 'Administrasi & Kesekretariatan' },
+          { id: 'st3', jabatan: 'Bendahara', nama: 'Rizky Pratama, S.Ak.', bidang: 'Keuangan & Pelaporan' }
+        ]
+      }
     };
 
     let state = loadState();
@@ -1019,7 +1195,17 @@
         documents: Array.isArray(parsed.documents) ? parsed.documents : [...DEFAULT_STATE.documents],
         markers: Array.isArray(parsed.markers) ? parsed.markers : [...DEFAULT_STATE.markers],
         schedules: Array.isArray(parsed.schedules) ? parsed.schedules : [...DEFAULT_STATE.schedules],
-        customFeatures: Array.isArray(parsed.customFeatures) ? parsed.customFeatures : [...DEFAULT_STATE.customFeatures]
+        customFeatures: Array.isArray(parsed.customFeatures) ? parsed.customFeatures : [...DEFAULT_STATE.customFeatures],
+        organizationProfile: {
+          ...DEFAULT_STATE.organizationProfile,
+          ...(parsed.organizationProfile || {}),
+          misi: Array.isArray(parsed.organizationProfile?.misi)
+            ? parsed.organizationProfile.misi
+            : [...DEFAULT_STATE.organizationProfile.misi],
+          struktural: Array.isArray(parsed.organizationProfile?.struktural)
+            ? parsed.organizationProfile.struktural
+            : [...DEFAULT_STATE.organizationProfile.struktural]
+        }
       };
     }
 
@@ -1315,6 +1501,7 @@
           renderBills();
           renderDocuments();
           renderMembers();
+          renderStrukturalAndIdentity();
           renderProfil();
           renderCustomFeatures();
         } else {
@@ -1553,6 +1740,7 @@
       renderUserAttendance();
       renderAdminRekap();
       renderBeranda();
+      renderStrukturalAndIdentity();
       renderAppLogos();
     });
 
@@ -1822,6 +2010,14 @@
         document.getElementById('admin-bill-creator').classList.remove('hidden');
         document.getElementById('admin-doc-creator').classList.remove('hidden');
         document.getElementById('admin-member-creator').classList.remove('hidden');
+        document.getElementById('admin-moto-form')?.classList.remove('hidden');
+        document.getElementById('admin-jargon-form')?.classList.remove('hidden');
+        document.getElementById('admin-visimisi-actions')?.classList.remove('hidden');
+        document.getElementById('admin-visi-form')?.classList.remove('hidden');
+        document.getElementById('admin-misi-form')?.classList.remove('hidden');
+        document.getElementById('admin-struktural-form')?.classList.remove('hidden');
+        document.getElementById('btn-delete-moto')?.classList.remove('hidden');
+        document.getElementById('btn-delete-jargon')?.classList.remove('hidden');
         document.getElementById('user-attendance-box').classList.add('hidden');
       } else {
         const mem = state.members.find(m => m.id === session.memberId);
@@ -1836,6 +2032,14 @@
         document.getElementById('admin-bill-creator').classList.add('hidden');
         document.getElementById('admin-doc-creator').classList.add('hidden');
         document.getElementById('admin-member-creator').classList.add('hidden');
+        document.getElementById('admin-moto-form')?.classList.add('hidden');
+        document.getElementById('admin-jargon-form')?.classList.add('hidden');
+        document.getElementById('admin-visimisi-actions')?.classList.add('hidden');
+        document.getElementById('admin-visi-form')?.classList.add('hidden');
+        document.getElementById('admin-misi-form')?.classList.add('hidden');
+        document.getElementById('admin-struktural-form')?.classList.add('hidden');
+        document.getElementById('btn-delete-moto')?.classList.add('hidden');
+        document.getElementById('btn-delete-jargon')?.classList.add('hidden');
         document.getElementById('user-attendance-box').classList.remove('hidden');
       }
       renderPresensiAccessControl();
@@ -1846,7 +2050,7 @@
       if (adminOnlyTabs.includes(tabName) && session.role !== 'admin') tabName = 'beranda';
 
       currentTab = tabName;
-      const tabs = ['beranda', 'jadwal', 'presensi', 'rekap', 'tagihan', 'dokumen', 'mahasiswa', 'profil', 'setelan'];
+      const tabs = ['beranda', 'jadwal', 'presensi', 'rekap', 'tagihan', 'dokumen', 'mahasiswa', 'struktural', 'profil', 'setelan'];
       tabs.forEach(t => {
         const panel = document.getElementById(`panel-${t}`);
         if (panel) panel.classList.toggle('hidden', t !== tabName);
@@ -1860,6 +2064,9 @@
         renderPresensiAccessControl();
         renderUserAttendance();
       }
+      if (tabName === 'struktural') {
+        renderStrukturalAndIdentity();
+      }
 
       const titles = {
         beranda: ['Beranda', 'Informasi utama & ringkasan layanan UPZ Universitas Pamulang'],
@@ -1869,6 +2076,7 @@
         tagihan: ['Tagihan', 'Rincian tagihan berdasarkan NIM, Prodi, dan jumlah tagihan'],
         dokumen: ['Arsip & Dokumen', 'Dokumen resmi UPZ Universitas Pamulang'],
         mahasiswa: ['Data Mahasiswa', 'Informasi mahasiswa & jadwal kelas'],
+        struktural: ['Struktural, Moto, Jargon & Visi Misi', 'Susunan pengurus, moto, jargon, serta visi & misi UPZ Universitas Pamulang'],
         profil: ['Profil', 'Informasi akun & biodata'],
         setelan: ['Setelan', 'Atur logo, info beranda, alamat kop PDF, logo 1-3 & fitur tambahan']
       };
@@ -1898,9 +2106,278 @@
       renderBills();
       renderDocuments();
       renderMembers();
+      renderStrukturalAndIdentity();
       renderProfil();
       renderCustomFeatures();
       renderSettingsForm();
+    }
+
+    function ensureOrgProfile() {
+      if (!state.organizationProfile || typeof state.organizationProfile !== 'object') {
+        state.organizationProfile = JSON.parse(JSON.stringify(DEFAULT_STATE.organizationProfile));
+      }
+      if (!Array.isArray(state.organizationProfile.misi)) {
+        state.organizationProfile.misi = [];
+      }
+      if (!Array.isArray(state.organizationProfile.struktural)) {
+        state.organizationProfile.struktural = [];
+      }
+      return state.organizationProfile;
+    }
+
+    function renderStrukturalAndIdentity() {
+      const org = ensureOrgProfile();
+      const isAdmin = session.role === 'admin';
+
+      const motoBox = document.getElementById('view-moto-box');
+      const jargonBox = document.getElementById('view-jargon-box');
+      const visiText = document.getElementById('view-visi-text');
+      const misiList = document.getElementById('view-misi-list');
+      const structGrid = document.getElementById('struktural-grid');
+
+      const inMoto = document.getElementById('input-moto');
+      const inJargon = document.getElementById('input-jargon');
+      const inVisi = document.getElementById('input-visi');
+
+      if (motoBox) {
+        motoBox.textContent = org.moto ? `"${org.moto}"` : 'Belum ada moto yang ditetapkan.';
+      }
+      if (jargonBox) {
+        jargonBox.textContent = org.jargon || 'Belum ada jargon yang ditetapkan.';
+      }
+      if (visiText) {
+        visiText.textContent = org.visi || 'Belum ada visi yang ditetapkan.';
+      }
+
+      if (inMoto && document.activeElement !== inMoto) inMoto.value = org.moto || '';
+      if (inJargon && document.activeElement !== inJargon) inJargon.value = org.jargon || '';
+      if (inVisi && document.activeElement !== inVisi) inVisi.value = org.visi || '';
+
+      if (misiList) {
+        if (!org.misi.length) {
+          misiList.innerHTML = `<li class="list-none text-xs text-slate-500">Belum ada poin misi yang ditambahkan.</li>`;
+        } else {
+          misiList.innerHTML = org.misi.map((item, idx) => `
+            <li class="flex items-start justify-between gap-2 rounded-xl bg-white/80 border border-teal-100 px-3 py-2">
+              <span class="text-sm text-slate-800"><span class="font-extrabold text-teal-800 mr-1">${idx + 1}.</span>${escapeHtml(item)}</span>
+              ${isAdmin ? `
+                <div class="flex items-center gap-1 shrink-0">
+                  <button type="button" onclick="openMisiModal(${idx})" class="px-2 py-0.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold">
+                    Edit
+                  </button>
+                  <button type="button" onclick="deleteMisiItem(${idx})" class="px-2 py-0.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold">
+                    Hapus
+                  </button>
+                </div>
+              ` : ''}
+            </li>
+          `).join('');
+        }
+      }
+
+      if (structGrid) {
+        if (!org.struktural.length) {
+          structGrid.innerHTML = `<p class="text-sm text-slate-500 col-span-full">Belum ada data pengurus struktural.</p>`;
+        } else {
+          structGrid.innerHTML = org.struktural.map(st => `
+            <div class="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 flex flex-col justify-between gap-3">
+              <div>
+                <span class="inline-block text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                  ${escapeHtml(st.jabatan)}
+                </span>
+                <h5 class="text-base font-extrabold text-slate-900 mt-2">${escapeHtml(st.nama)}</h5>
+                ${st.bidang ? `<p class="text-xs font-medium text-slate-600 mt-0.5">${escapeHtml(st.bidang)}</p>` : ''}
+              </div>
+              ${isAdmin ? `
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-200/70">
+                  <button type="button" onclick="openStrukturalModal('${st.id}')" class="px-3 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold">
+                    Edit
+                  </button>
+                  <button type="button" onclick="deleteStruktural('${st.id}')" class="px-3 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold">
+                    Hapus
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    onEl('admin-moto-form', 'submit', function (e) {
+      e.preventDefault();
+      if (session.role !== 'admin') return;
+      const val = document.getElementById('input-moto')?.value.trim();
+      if (!val) return;
+      ensureOrgProfile().moto = val;
+      saveState();
+      renderStrukturalAndIdentity();
+      showToast('Moto UPZ berhasil diperbarui.');
+    });
+
+    function deleteMoto() {
+      if (session.role !== 'admin') return;
+      ensureOrgProfile().moto = '';
+      saveState();
+      renderStrukturalAndIdentity();
+      showToast('Moto UPZ dihapus.');
+    }
+
+    onEl('admin-jargon-form', 'submit', function (e) {
+      e.preventDefault();
+      if (session.role !== 'admin') return;
+      const val = document.getElementById('input-jargon')?.value.trim();
+      if (!val) return;
+      ensureOrgProfile().jargon = val;
+      saveState();
+      renderStrukturalAndIdentity();
+      showToast('Jargon UPZ berhasil diperbarui.');
+    });
+
+    function deleteJargon() {
+      if (session.role !== 'admin') return;
+      ensureOrgProfile().jargon = '';
+      saveState();
+      renderStrukturalAndIdentity();
+      showToast('Jargon UPZ dihapus.');
+    }
+
+    onEl('admin-visi-form', 'submit', function (e) {
+      e.preventDefault();
+      if (session.role !== 'admin') return;
+      const val = document.getElementById('input-visi')?.value.trim();
+      if (!val) return;
+      ensureOrgProfile().visi = val;
+      saveState();
+      renderStrukturalAndIdentity();
+      showToast('Visi UPZ berhasil diperbarui.');
+    });
+
+    function deleteVisi() {
+      if (session.role !== 'admin') return;
+      ensureOrgProfile().visi = '';
+      saveState();
+      renderStrukturalAndIdentity();
+      showToast('Visi UPZ dihapus.');
+    }
+
+    onEl('admin-misi-form', 'submit', function (e) {
+      e.preventDefault();
+      if (session.role !== 'admin') return;
+      const inp = document.getElementById('input-misi-item');
+      const val = inp?.value.trim();
+      if (!val) return;
+      ensureOrgProfile().misi.push(val);
+      saveState();
+      if (inp) inp.value = '';
+      renderStrukturalAndIdentity();
+      showToast('Poin misi ditambahkan.');
+    });
+
+    function openMisiModal(index) {
+      if (session.role !== 'admin') return;
+      const org = ensureOrgProfile();
+      if (typeof org.misi[index] === 'undefined') return;
+      document.getElementById('edit-misi-index').value = String(index);
+      document.getElementById('edit-misi-text').value = org.misi[index];
+      const modal = document.getElementById('misi-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeMisiModal() {
+      const modal = document.getElementById('misi-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    onEl('misi-edit-form', 'submit', function (e) {
+      e.preventDefault();
+      if (session.role !== 'admin') return;
+      const idx = parseInt(document.getElementById('edit-misi-index')?.value, 10);
+      const val = document.getElementById('edit-misi-text')?.value.trim();
+      const org = ensureOrgProfile();
+      if (Number.isNaN(idx) || !val || typeof org.misi[idx] === 'undefined') return;
+      org.misi[idx] = val;
+      saveState();
+      closeMisiModal();
+      renderStrukturalAndIdentity();
+      showToast('Poin misi diperbarui.');
+    });
+
+    function deleteMisiItem(index) {
+      if (session.role !== 'admin') return;
+      const org = ensureOrgProfile();
+      org.misi.splice(index, 1);
+      saveState();
+      renderStrukturalAndIdentity();
+      showToast('Poin misi dihapus.');
+    }
+
+    onEl('admin-struktural-form', 'submit', function (e) {
+      e.preventDefault();
+      if (session.role !== 'admin') return;
+      const jabatan = document.getElementById('struct-jabatan')?.value.trim();
+      const nama = document.getElementById('struct-nama')?.value.trim();
+      const bidang = document.getElementById('struct-bidang')?.value.trim() || '';
+      if (!jabatan || !nama) return;
+      ensureOrgProfile().struktural.push({
+        id: 'st_' + Date.now(),
+        jabatan,
+        nama,
+        bidang
+      });
+      saveState();
+      this.reset();
+      renderStrukturalAndIdentity();
+      showToast('Pengurus struktural ditambahkan.');
+    });
+
+    function openStrukturalModal(id) {
+      if (session.role !== 'admin') return;
+      const item = ensureOrgProfile().struktural.find(s => s.id === id);
+      if (!item) return;
+      document.getElementById('edit-struct-id').value = item.id;
+      document.getElementById('edit-struct-jabatan').value = item.jabatan;
+      document.getElementById('edit-struct-nama').value = item.nama;
+      document.getElementById('edit-struct-bidang').value = item.bidang || '';
+      const modal = document.getElementById('struktural-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeStrukturalModal() {
+      const modal = document.getElementById('struktural-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    onEl('struktural-edit-form', 'submit', function (e) {
+      e.preventDefault();
+      if (session.role !== 'admin') return;
+      const id = document.getElementById('edit-struct-id')?.value;
+      const item = ensureOrgProfile().struktural.find(s => s.id === id);
+      if (!item) return;
+      item.jabatan = document.getElementById('edit-struct-jabatan')?.value.trim() || item.jabatan;
+      item.nama = document.getElementById('edit-struct-nama')?.value.trim() || item.nama;
+      item.bidang = document.getElementById('edit-struct-bidang')?.value.trim() || '';
+      saveState();
+      closeStrukturalModal();
+      renderStrukturalAndIdentity();
+      showToast('Data struktural diperbarui.');
+    });
+
+    function deleteStruktural(id) {
+      if (session.role !== 'admin') return;
+      const org = ensureOrgProfile();
+      org.struktural = org.struktural.filter(s => s.id !== id);
+      saveState();
+      renderStrukturalAndIdentity();
+      showToast('Data struktural dihapus.');
     }
 
     function applyThemeColors() {
