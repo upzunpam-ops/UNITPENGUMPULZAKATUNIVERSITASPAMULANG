@@ -125,7 +125,8 @@
         </button>
       </form>
 
-      <div class="mt-5 pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-end">
+      <div class="mt-5 pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+        <span id="login-sync-badge" class="inline-flex items-center gap-1.5 font-semibold text-amber-700">● Mode Lokal</span>
         <span class="font-semibold text-slate-600">Akses Terverifikasi</span>
       </div>
     </div>
@@ -205,9 +206,14 @@
             <p id="page-subtitle" class="text-xs text-slate-500 truncate">Informasi & layanan Unit Pengumpul Zakat Universitas Pamulang</p>
           </div>
         </div>
-        <div class="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">
-          <span>🗓️</span>
-          <span id="header-today-date">-</span>
+        <div class="flex items-center gap-2">
+          <span id="header-sync-badge" class="hidden md:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+            ● Lokal
+          </span>
+          <div class="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">
+            <span>🗓️</span>
+            <span id="header-today-date">-</span>
+          </div>
         </div>
       </header>
 
@@ -512,6 +518,23 @@
               <button type="button" id="btn-toggle-presensi-settings" onclick="togglePresensiOpen()" class="px-3.5 py-2 rounded-xl text-xs font-bold transition"></button>
             </div>
 
+            <!-- Sinkronisasi Cloud Antar Laptop / GitHub Pages -->
+            <div class="rounded-2xl bg-indigo-50/70 border border-indigo-200 p-4 space-y-2.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h5 class="text-sm font-extrabold text-indigo-950">Sinkronisasi Cloud Antar-Laptop & Akun (GitHub Pages)</h5>
+                  <p class="text-xs text-slate-600">Tempel Firebase Web Config (JSON) agar setiap perubahan Admin & User langsung ter-update di semua perangkat.</p>
+                </div>
+                <span id="settings-cloud-status" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">Mode Lokal</span>
+              </div>
+              <textarea id="set-firebase-config" rows="3" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}' class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs"></textarea>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="saveFirebaseCloudConfig()" class="px-3.5 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold">Simpan & Hubungkan Cloud</button>
+                <button type="button" onclick="copyCloudShareLink()" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold">🔗 Salin Link Auto-Sync</button>
+                <button type="button" onclick="disconnectFirebaseCloud()" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold">Putuskan Cloud</button>
+              </div>
+            </div>
+
             <!-- Ganti Logo Utama Website -->
             <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-4 space-y-3">
               <div class="flex flex-wrap items-center justify-between gap-2">
@@ -746,9 +769,14 @@
     </div>
   </div>
 
+  <!-- Firebase SDK untuk Sinkronisasi Cloud Real-Time Antar-Perangkat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
   <script>
     const STORAGE_KEY = 'upz_unpam_portal_v2';
     const PRESENSI_LOCK_KEY = 'upz_unpam_presensi_open';
+    const CLOUD_CONFIG_KEY = 'upz_unpam_cloud_cfg_v2';
 
     const SINGLE_ADMIN = {
       username: 'upz123',
@@ -759,6 +787,7 @@
     };
 
     const DEFAULT_STATE = {
+      _updatedAt: 0,
       settings: {
         introTitle: 'Selamat Datang di Portal UPZ Universitas Pamulang',
         introSubtitle: 'Layanan Informasi, Presensi & Administrasi Terpadu',
@@ -863,12 +892,179 @@
     let ambientAudioCtx = null;
     let ambientTimer = null;
     let lastKnownSyncStamp = '';
+    let cloudDb = null;
+    let cloudConnected = false;
 
     const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('upz_unpam_sync') : null;
     if (syncChannel) {
       syncChannel.onmessage = function () {
         syncFromStorage(true);
       };
+    }
+
+    function mergeParsedState(parsed) {
+      const mergedSettings = {
+        ...DEFAULT_STATE.settings,
+        ...(parsed.settings || {}),
+        theme: {
+          ...DEFAULT_STATE.settings.theme,
+          ...(parsed.settings?.theme || {})
+        },
+        kopLogos: Array.isArray(parsed.settings?.kopLogos)
+          ? [
+              parsed.settings.kopLogos[0] || null,
+              parsed.settings.kopLogos[1] || null,
+              parsed.settings.kopLogos[2] || null
+            ]
+          : [...DEFAULT_STATE.settings.kopLogos],
+        kopLogoNames: Array.isArray(parsed.settings?.kopLogoNames)
+          ? [
+              parsed.settings.kopLogoNames[0] || '',
+              parsed.settings.kopLogoNames[1] || '',
+              parsed.settings.kopLogoNames[2] || ''
+            ]
+          : [...DEFAULT_STATE.settings.kopLogoNames],
+        photos: Array.isArray(parsed.settings?.photos) && parsed.settings.photos.length
+          ? parsed.settings.photos
+          : [...DEFAULT_STATE.settings.photos]
+      };
+
+      return {
+        ...DEFAULT_STATE,
+        ...parsed,
+        settings: mergedSettings,
+        adminAuth: {
+          ...DEFAULT_STATE.adminAuth,
+          ...(parsed.adminAuth || {})
+        },
+        members: Array.isArray(parsed.members) ? parsed.members : [...DEFAULT_STATE.members],
+        attendance: Array.isArray(parsed.attendance) ? parsed.attendance : [...DEFAULT_STATE.attendance],
+        bills: Array.isArray(parsed.bills) ? parsed.bills : [...DEFAULT_STATE.bills],
+        documents: Array.isArray(parsed.documents) ? parsed.documents : [...DEFAULT_STATE.documents],
+        markers: Array.isArray(parsed.markers) ? parsed.markers : [...DEFAULT_STATE.markers],
+        schedules: Array.isArray(parsed.schedules) ? parsed.schedules : [...DEFAULT_STATE.schedules],
+        customFeatures: Array.isArray(parsed.customFeatures) ? parsed.customFeatures : [...DEFAULT_STATE.customFeatures]
+      };
+    }
+
+    function initCloudSync() {
+      try {
+        if (window.location.hash.startsWith('#cloud=')) {
+          const decoded = JSON.parse(atob(decodeURIComponent(window.location.hash.slice(7))));
+          if (decoded && decoded.projectId) {
+            localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(decoded));
+          }
+        }
+      } catch (e) {}
+
+      const rawCfg = localStorage.getItem(CLOUD_CONFIG_KEY);
+      const cfgBox = document.getElementById('set-firebase-config');
+      if (rawCfg && cfgBox) cfgBox.value = rawCfg;
+
+      if (!rawCfg || typeof firebase === 'undefined') {
+        updateCloudBadges(false);
+        return;
+      }
+
+      try {
+        const cfg = JSON.parse(rawCfg);
+        if (!firebase.apps.length) firebase.initializeApp(cfg);
+        cloudDb = firebase.firestore();
+        cloudConnected = true;
+        updateCloudBadges(true);
+
+        cloudDb.collection('upz_unpam_portal').doc('shared_state').onSnapshot((doc) => {
+          if (doc.exists) {
+            const remote = mergeParsedState(doc.data());
+            if ((remote._updatedAt || 0) > (state._updatedAt || 0)) {
+              state = remote;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+              localStorage.setItem(PRESENSI_LOCK_KEY, state.settings.attendanceOpen !== false ? 'true' : 'false');
+              syncFromStorage(true);
+            }
+          } else {
+            cloudDb.collection('upz_unpam_portal').doc('shared_state').set(state).catch(() => {});
+          }
+        }, () => updateCloudBadges(false));
+      } catch (e) {
+        updateCloudBadges(false);
+      }
+    }
+
+    function updateCloudBadges(online) {
+      cloudConnected = online;
+      const lBadge = document.getElementById('login-sync-badge');
+      const hBadge = document.getElementById('header-sync-badge');
+      const sBadge = document.getElementById('settings-cloud-status');
+
+      if (online) {
+        if (lBadge) {
+          lBadge.textContent = '● Cloud Real-Time Aktif';
+          lBadge.className = 'inline-flex items-center gap-1.5 font-semibold text-teal-700';
+        }
+        if (hBadge) {
+          hBadge.textContent = '● Cloud Terhubung';
+          hBadge.className = 'hidden md:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-teal-50 text-teal-700 border border-teal-200';
+        }
+        if (sBadge) {
+          sBadge.textContent = 'Terhubung ke Cloud';
+          sBadge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-teal-100 text-teal-800';
+        }
+      } else {
+        if (lBadge) {
+          lBadge.textContent = '● Mode Lokal';
+          lBadge.className = 'inline-flex items-center gap-1.5 font-semibold text-amber-700';
+        }
+        if (hBadge) {
+          hBadge.textContent = '● Lokal';
+          hBadge.className = 'hidden md:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200';
+        }
+        if (sBadge) {
+          sBadge.textContent = 'Mode Lokal';
+          sBadge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800';
+        }
+      }
+    }
+
+    function saveFirebaseCloudConfig() {
+      try {
+        const raw = document.getElementById('set-firebase-config')?.value.trim();
+        const parsed = JSON.parse(raw);
+        if (!parsed.apiKey || !parsed.projectId) {
+          showToast('JSON Firebase harus memiliki apiKey dan projectId.');
+          return;
+        }
+        localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(parsed));
+        showToast('Konfigurasi Cloud disimpan. Menghubungkan ulang...');
+        setTimeout(() => window.location.reload(), 600);
+      } catch (e) {
+        showToast('Format JSON Firebase tidak valid.');
+      }
+    }
+
+    function copyCloudShareLink() {
+      const raw = localStorage.getItem(CLOUD_CONFIG_KEY);
+      if (!raw) {
+        showToast('Simpan konfigurasi Firebase terlebih dahulu.');
+        return;
+      }
+      const shareUrl = `${window.location.origin}${window.location.pathname}#cloud=${encodeURIComponent(btoa(raw))}`;
+      const ta = document.createElement('textarea');
+      ta.value = shareUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Link Auto-Sync berhasil disalin untuk dibagikan!');
+    }
+
+    function disconnectFirebaseCloud() {
+      localStorage.removeItem(CLOUD_CONFIG_KEY);
+      if (window.location.hash.startsWith('#cloud=')) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+      showToast('Koneksi Cloud diputuskan.');
+      setTimeout(() => window.location.reload(), 500);
     }
 
     function syncFromStorage(forceRender = false) {
@@ -1051,54 +1247,13 @@
           return JSON.parse(JSON.stringify(DEFAULT_STATE));
         }
 
-        const mergedSettings = {
-          ...DEFAULT_STATE.settings,
-          ...(parsed.settings || {}),
-          theme: {
-            ...DEFAULT_STATE.settings.theme,
-            ...(parsed.settings?.theme || {})
-          },
-          kopLogos: Array.isArray(parsed.settings?.kopLogos)
-            ? [
-                parsed.settings.kopLogos[0] || null,
-                parsed.settings.kopLogos[1] || null,
-                parsed.settings.kopLogos[2] || null
-              ]
-            : [...DEFAULT_STATE.settings.kopLogos],
-          kopLogoNames: Array.isArray(parsed.settings?.kopLogoNames)
-            ? [
-                parsed.settings.kopLogoNames[0] || '',
-                parsed.settings.kopLogoNames[1] || '',
-                parsed.settings.kopLogoNames[2] || ''
-              ]
-            : [...DEFAULT_STATE.settings.kopLogoNames],
-          photos: Array.isArray(parsed.settings?.photos) && parsed.settings.photos.length
-            ? parsed.settings.photos
-            : [...DEFAULT_STATE.settings.photos]
-        };
-
+        const merged = mergeParsedState(parsed);
         if (lockFlag === 'false') {
-          mergedSettings.attendanceOpen = false;
+          merged.settings.attendanceOpen = false;
         } else if (lockFlag === 'true') {
-          mergedSettings.attendanceOpen = true;
+          merged.settings.attendanceOpen = true;
         }
-
-        return {
-          ...DEFAULT_STATE,
-          ...parsed,
-          settings: mergedSettings,
-          adminAuth: {
-            ...DEFAULT_STATE.adminAuth,
-            ...(parsed.adminAuth || {})
-          },
-          members: Array.isArray(parsed.members) ? parsed.members : [...DEFAULT_STATE.members],
-          attendance: Array.isArray(parsed.attendance) ? parsed.attendance : [...DEFAULT_STATE.attendance],
-          bills: Array.isArray(parsed.bills) ? parsed.bills : [...DEFAULT_STATE.bills],
-          documents: Array.isArray(parsed.documents) ? parsed.documents : [...DEFAULT_STATE.documents],
-          markers: Array.isArray(parsed.markers) ? parsed.markers : [...DEFAULT_STATE.markers],
-          schedules: Array.isArray(parsed.schedules) ? parsed.schedules : [...DEFAULT_STATE.schedules],
-          customFeatures: Array.isArray(parsed.customFeatures) ? parsed.customFeatures : [...DEFAULT_STATE.customFeatures]
-        };
+        return merged;
       } catch (e) {
         return JSON.parse(JSON.stringify(DEFAULT_STATE));
       }
@@ -1122,6 +1277,9 @@
         window.dispatchEvent(new Event('upz-state-updated'));
         if (syncChannel) {
           syncChannel.postMessage({ type: 'updated', ts: state._updatedAt });
+        }
+        if (cloudDb) {
+          cloudDb.collection('upz_unpam_portal').doc('shared_state').set(state).catch(() => {});
         }
       } catch (e) {
         showToast('Gagal menyimpan ke penyimpanan lokal.');
@@ -2792,6 +2950,7 @@
       showToast('PDF Dokumen diunduh.');
     }
 
+    initCloudSync();
     renderAll();
     playIntroSplash();
   </script>
