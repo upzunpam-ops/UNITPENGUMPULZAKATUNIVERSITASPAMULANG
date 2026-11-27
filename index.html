@@ -904,6 +904,8 @@
     let lastKnownSyncStamp = '';
     let cloudDb = null;
     let cloudConnected = false;
+    let cloudErrorReason = '';
+    let cloudUnsubscribe = null;
 
     const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('upz_unpam_sync') : null;
     if (syncChannel) {
@@ -968,6 +970,19 @@
       } catch (e) {}
 
       let rawCfg = localStorage.getItem(CLOUD_CONFIG_KEY);
+      if (rawCfg) {
+        try {
+          const parsedLocal = JSON.parse(rawCfg);
+          if (!parsedLocal.apiKey || parsedLocal.apiKey.includes('TEMPEL_API_KEY') || parsedLocal.apiKey.includes('DummyKey')) {
+            localStorage.removeItem(CLOUD_CONFIG_KEY);
+            rawCfg = null;
+          }
+        } catch (e) {
+          localStorage.removeItem(CLOUD_CONFIG_KEY);
+          rawCfg = null;
+        }
+      }
+
       const hasValidDefault =
         DEFAULT_FIREBASE_CONFIG &&
         DEFAULT_FIREBASE_CONFIG.projectId &&
@@ -977,28 +992,46 @@
 
       if (!rawCfg && hasValidDefault) {
         rawCfg = JSON.stringify(DEFAULT_FIREBASE_CONFIG);
+        localStorage.setItem(CLOUD_CONFIG_KEY, rawCfg);
       }
 
       const cfgBox = document.getElementById('set-firebase-config');
       if (rawCfg && cfgBox) cfgBox.value = rawCfg;
 
-      if (!rawCfg || typeof firebase === 'undefined') {
+      if (!rawCfg) {
+        cloudErrorReason = 'Konfigurasi kosong';
+        updateCloudBadges(false);
+        return;
+      }
+
+      if (typeof firebase === 'undefined') {
+        cloudErrorReason = 'SDK Firebase belum termuat (cek koneksi internet)';
         updateCloudBadges(false);
         return;
       }
 
       try {
         const cfg = JSON.parse(rawCfg);
-        if (!cfg.apiKey || cfg.apiKey.includes('TEMPEL_API_KEY') || cfg.apiKey.includes('DummyKey')) {
+        if (!cfg.apiKey || !cfg.projectId) {
+          cloudErrorReason = 'apiKey / projectId tidak lengkap';
           updateCloudBadges(false);
           return;
         }
-        if (!firebase.apps.length) firebase.initializeApp(cfg);
+        if (!firebase.apps.length) {
+          firebase.initializeApp(cfg);
+        }
         cloudDb = firebase.firestore();
-        cloudConnected = true;
-        updateCloudBadges(true);
+        cloudErrorReason = '';
+        updateCloudBadges(true, 'Menghubungkan Cloud...');
 
-        cloudDb.collection('upz_unpam_portal').doc('shared_state').onSnapshot((doc) => {
+        if (cloudUnsubscribe) {
+          cloudUnsubscribe();
+        }
+
+        const docRef = cloudDb.collection('upz_unpam_portal').doc('shared_state');
+        cloudUnsubscribe = docRef.onSnapshot((doc) => {
+          cloudErrorReason = '';
+          updateCloudBadges(true);
           if (doc.exists) {
             const remote = mergeParsedState(doc.data());
             if ((remote._updatedAt || 0) > (state._updatedAt || 0)) {
@@ -1006,25 +1039,38 @@
               localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
               localStorage.setItem(PRESENSI_LOCK_KEY, state.settings.attendanceOpen !== false ? 'true' : 'false');
               syncFromStorage(true);
+            } else if ((state._updatedAt || 0) > (remote._updatedAt || 0)) {
+              docRef.set(JSON.parse(JSON.stringify(state))).catch(() => {});
             }
           } else {
-            cloudDb.collection('upz_unpam_portal').doc('shared_state').set(state).catch(() => {});
+            state._updatedAt = Date.now();
+            docRef.set(JSON.parse(JSON.stringify(state))).catch((err) => {
+              cloudErrorReason = err?.code || 'Gagal tulis Firestore (cek Rules)';
+              updateCloudBadges(false);
+            });
           }
-        }, () => updateCloudBadges(false));
+        }, (err) => {
+          cloudErrorReason = err?.code === 'permission-denied'
+            ? 'Izin Firestore ditolak (atur Rules ke allow read, write: if true;)'
+            : (err?.code || 'Gagal terhubung ke Firestore');
+          updateCloudBadges(false);
+        });
       } catch (e) {
+        cloudErrorReason = e?.message || 'Error inisialisasi Firebase';
         updateCloudBadges(false);
       }
     }
 
-    function updateCloudBadges(online) {
+    function updateCloudBadges(online, customLabel = '') {
       cloudConnected = online;
       const lBadge = document.getElementById('login-sync-badge');
       const hBadge = document.getElementById('header-sync-badge');
       const sBadge = document.getElementById('settings-cloud-status');
 
       if (online) {
+        const label = customLabel || '● Cloud Real-Time Aktif';
         if (lBadge) {
-          lBadge.textContent = '● Cloud Real-Time Aktif';
+          lBadge.textContent = label;
           lBadge.className = 'inline-flex items-center gap-1.5 font-semibold text-teal-700';
         }
         if (hBadge) {
@@ -1032,20 +1078,22 @@
           hBadge.className = 'hidden md:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-teal-50 text-teal-700 border border-teal-200';
         }
         if (sBadge) {
-          sBadge.textContent = 'Terhubung ke Cloud';
+          sBadge.textContent = 'Terhubung ke Cloud (upzunpam-31ffb)';
           sBadge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-teal-100 text-teal-800';
         }
       } else {
+        const reasonSuffix = cloudErrorReason ? ` (${cloudErrorReason})` : '';
         if (lBadge) {
-          lBadge.textContent = '● Mode Lokal';
+          lBadge.textContent = `● Mode Lokal${reasonSuffix}`;
           lBadge.className = 'inline-flex items-center gap-1.5 font-semibold text-amber-700';
         }
         if (hBadge) {
           hBadge.textContent = '● Lokal';
+          hBadge.title = cloudErrorReason || 'Mode Lokal';
           hBadge.className = 'hidden md:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200';
         }
         if (sBadge) {
-          sBadge.textContent = 'Mode Lokal';
+          sBadge.textContent = `Mode Lokal${reasonSuffix}`;
           sBadge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800';
         }
       }
