@@ -50,6 +50,34 @@
   <!-- Toast Notifikasi -->
   <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden max-w-sm rounded-2xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-xl"></div>
 
+  <!-- Animasi Masuk Awal Sebelum Portal Login -->
+  <div id="intro-splash" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-teal-900 text-white p-6 text-center transition-all duration-700">
+    <div class="relative flex items-center justify-center h-24 w-24 mb-5">
+      <div class="absolute inset-0 rounded-3xl bg-teal-400/20 animate-ping"></div>
+      <div class="absolute -inset-2 rounded-3xl border-2 border-white/20 animate-pulse"></div>
+      <div id="intro-logo-box" class="relative h-20 w-20 rounded-2xl theme-btn-grad flex items-center justify-center text-white font-extrabold text-2xl shadow-2xl overflow-hidden border border-white/25">
+        UPZ
+      </div>
+    </div>
+    <span class="inline-block text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-white/10 text-teal-200 border border-white/15 mb-3">
+      Portal Resmi
+    </span>
+    <h1 id="intro-splash-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight max-w-lg leading-snug">
+      Selamat Datang di Portal UPZ Universitas Pamulang
+    </h1>
+    <p id="intro-splash-subtitle" class="text-sm text-indigo-100/90 mt-2.5 max-w-md leading-relaxed">
+      Layanan Informasi, Presensi & Administrasi Terpadu
+    </p>
+    <div class="mt-7 flex flex-col items-center gap-3">
+      <div class="w-44 h-1.5 rounded-full bg-white/15 overflow-hidden">
+        <div id="intro-progress-bar" class="h-full w-0 bg-gradient-to-r from-teal-300 to-indigo-300 transition-all duration-300"></div>
+      </div>
+      <button type="button" onclick="dismissIntroSplash()" class="mt-1 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-bold text-white border border-white/20 transition">
+        Masuk ke Portal →
+      </button>
+    </div>
+  </div>
+
   <!-- Animasi Loading Masuk -->
   <div id="loading-overlay" class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-gradient-to-br from-indigo-950 via-indigo-900 to-teal-800 text-white p-6">
     <div class="relative flex items-center justify-center h-20 w-20 mb-4">
@@ -488,10 +516,13 @@
             <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-4 space-y-3">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h5 class="text-sm font-extrabold text-slate-900">Ganti Logo Utama Aplikasi (Login, Sidebar & Beranda)</h5>
-                  <p class="text-xs text-slate-500">Unggah file gambar logo organisasi/kampus untuk mengganti ikon huruf UPZ</p>
+                  <h5 class="text-sm font-extrabold text-slate-900">Ganti Logo Utama & Animasi Masuk (Splash, Login, Sidebar & Beranda)</h5>
+                  <p class="text-xs text-slate-500">Unggah file gambar logo untuk mengganti ikon pada layar animasi awal, login, sidebar & beranda</p>
                 </div>
-                <button type="button" onclick="clearAppLogo()" class="text-xs font-bold text-rose-600 hover:underline">Reset Logo Bawaan</button>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="previewIntroSplash()" class="px-3 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-xs font-bold text-indigo-700">▶ Pratinjau Animasi</button>
+                  <button type="button" onclick="clearAppLogo()" class="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700">Hapus / Reset Logo</button>
+                </div>
               </div>
               <div class="flex flex-wrap items-center gap-4">
                 <div id="settings-app-logo-preview" class="h-14 w-14 rounded-2xl theme-btn-grad flex items-center justify-center text-white font-extrabold text-base overflow-hidden border border-slate-200 shrink-0">
@@ -500,6 +531,16 @@
                 <div class="flex-1 min-w-[200px] space-y-1">
                   <input type="file" id="set-app-logo-file" accept="image/*" class="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                   <p id="set-app-logo-status" class="text-[11px] text-slate-500">Menggunakan logo teks bawaan (UPZ)</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/70">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 mb-1">Judul Animasi Masuk (Sebelum Portal)</label>
+                  <input type="text" id="set-intro-title" placeholder="Contoh: Selamat Datang di Portal UPZ UNPAM" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 mb-1">Kata-Kata / Subjudul Animasi Masuk</label>
+                  <input type="text" id="set-intro-subtitle" placeholder="Contoh: Layanan Informasi & Administrasi Terpadu" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
                 </div>
               </div>
             </div>
@@ -607,12 +648,18 @@
                 <h5 class="text-sm font-extrabold text-slate-900">Edit File Video Otomatis & Foto Beranda (Khusus Admin)</h5>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 space-y-2">
-                    <label for="set-video-file" class="block text-xs font-bold text-slate-700">File Video Otomatis (MP4/WebM)</label>
+                    <div class="flex items-center justify-between gap-2">
+                      <label for="set-video-file" class="block text-xs font-bold text-slate-700">File Video Otomatis (MP4/WebM)</label>
+                      <button type="button" onclick="clearCustomVideo()" class="text-[11px] font-bold text-rose-600 hover:underline">Hapus Video</button>
+                    </div>
                     <input type="file" id="set-video-file" accept="video/*" class="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                     <p id="set-video-status" class="text-[11px] text-slate-500 truncate">Menggunakan video bawaan</p>
                   </div>
                   <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 space-y-2">
-                    <label for="set-photo-files" class="block text-xs font-bold text-slate-700">File Foto Galeri (Bisa Pilih Banyak)</label>
+                    <div class="flex items-center justify-between gap-2">
+                      <label for="set-photo-files" class="block text-xs font-bold text-slate-700">File Foto Galeri (Bisa Pilih Banyak)</label>
+                      <button type="button" onclick="resetDefaultPhotos()" class="text-[11px] font-bold text-rose-600 hover:underline">Reset Foto</button>
+                    </div>
                     <input type="file" id="set-photo-files" accept="image/*" multiple class="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
                     <p id="set-photo-status" class="text-[11px] text-slate-500 truncate">Menggunakan 3 foto bawaan</p>
                   </div>
@@ -713,6 +760,8 @@
 
     const DEFAULT_STATE = {
       settings: {
+        introTitle: 'Selamat Datang di Portal UPZ Universitas Pamulang',
+        introSubtitle: 'Layanan Informasi, Presensi & Administrasi Terpadu',
         berandaTitle: 'Selamat Datang di Layanan Informasi UPZ UNPAM',
         berandaBody: 'Pusat informasi kegiatan sosial, kalender akademik & hari besar, tagihan mahasiswa, dan arsip resmi UPZ Universitas Pamulang.',
         kopAddress: 'Jl. Surya Kencana No. 1, Pamulang, Kota Tangerang Selatan, Banten 15417',
@@ -813,16 +862,42 @@
     let videoSoundEnabled = false;
     let ambientAudioCtx = null;
     let ambientTimer = null;
+    let lastKnownSyncStamp = '';
 
     const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('upz_unpam_sync') : null;
     if (syncChannel) {
       syncChannel.onmessage = function () {
-        state = loadState();
-        renderPresensiAccessControl();
-        renderUserAttendance();
-        renderAdminRekap();
-        renderAppLogos();
+        syncFromStorage(true);
       };
+    }
+
+    function syncFromStorage(forceRender = false) {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY) || '';
+        const lockFlag = localStorage.getItem(PRESENSI_LOCK_KEY) || '';
+        const stamp = raw.length + ':' + lockFlag + ':' + raw.slice(-80);
+        if (!forceRender && stamp === lastKnownSyncStamp) return;
+        lastKnownSyncStamp = stamp;
+        state = loadState();
+        if (document.getElementById('app-shell') && !document.getElementById('app-shell').classList.contains('hidden')) {
+          applyRoleVisibility();
+          applyThemeColors();
+          renderAppLogos();
+          renderBeranda();
+          renderCalendar();
+          renderMarkersAndSchedules();
+          renderUserAttendance();
+          renderAdminRekap();
+          renderBills();
+          renderDocuments();
+          renderMembers();
+          renderProfil();
+          renderCustomFeatures();
+        } else {
+          renderAppLogos();
+          applyThemeColors();
+        }
+      } catch (e) {}
     }
 
     function createFallbackVideoDataUrl() {
@@ -1039,11 +1114,14 @@
 
     function saveState() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        state._updatedAt = Date.now();
+        const serialized = JSON.stringify(state);
+        localStorage.setItem(STORAGE_KEY, serialized);
         localStorage.setItem(PRESENSI_LOCK_KEY, state.settings.attendanceOpen !== false ? 'true' : 'false');
+        lastKnownSyncStamp = serialized.length + ':' + (state.settings.attendanceOpen !== false ? 'true' : 'false') + ':' + serialized.slice(-80);
         window.dispatchEvent(new Event('upz-state-updated'));
         if (syncChannel) {
-          syncChannel.postMessage({ type: 'updated' });
+          syncChannel.postMessage({ type: 'updated', ts: state._updatedAt });
         }
       } catch (e) {
         showToast('Gagal menyimpan ke penyimpanan lokal.');
@@ -1052,12 +1130,17 @@
 
     window.addEventListener('storage', function (e) {
       if (e.key === STORAGE_KEY || e.key === PRESENSI_LOCK_KEY) {
-        state = loadState();
-        renderPresensiAccessControl();
-        renderUserAttendance();
-        renderAdminRekap();
-        renderBeranda();
-        renderAppLogos();
+        syncFromStorage(true);
+      }
+    });
+
+    window.addEventListener('focus', function () {
+      syncFromStorage(true);
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) {
+        syncFromStorage(true);
       }
     });
 
@@ -1070,10 +1153,8 @@
     });
 
     setInterval(function () {
-      if (session.role === 'user' && currentTab === 'presensi') {
-        renderPresensiAccessControl();
-      }
-    }, 1500);
+      syncFromStorage(false);
+    }, 1000);
 
     function showToast(msg) {
       const el = document.getElementById('toast-box');
@@ -1109,14 +1190,25 @@
 
     function renderAppLogos() {
       const logoSrc = state.settings?.appLogo;
+      const introBox = document.getElementById('intro-logo-box');
+      const introTitleEl = document.getElementById('intro-splash-title');
+      const introSubEl = document.getElementById('intro-splash-subtitle');
       const loginBox = document.getElementById('login-logo-box');
       const sidebarBox = document.getElementById('sidebar-logo-box');
       const berandaBox = document.getElementById('beranda-logo-box');
       const previewBox = document.getElementById('settings-app-logo-preview');
       const statusEl = document.getElementById('set-app-logo-status');
 
+      if (introTitleEl) {
+        introTitleEl.textContent = state.settings?.introTitle || DEFAULT_STATE.settings.introTitle;
+      }
+      if (introSubEl) {
+        introSubEl.textContent = state.settings?.introSubtitle || DEFAULT_STATE.settings.introSubtitle;
+      }
+
       if (logoSrc) {
         const imgTag = `<img src="${escapeHtml(logoSrc)}" alt="Logo UPZ" class="w-full h-full object-contain bg-white p-1" />`;
+        if (introBox) introBox.innerHTML = imgTag;
         if (loginBox) loginBox.innerHTML = imgTag;
         if (sidebarBox) sidebarBox.innerHTML = imgTag;
         if (berandaBox) {
@@ -1126,6 +1218,7 @@
         if (previewBox) previewBox.innerHTML = imgTag;
         if (statusEl) statusEl.textContent = `Aktif: ${state.settings.appLogoName || 'Logo Kustom'}`;
       } else {
+        if (introBox) introBox.innerHTML = 'UPZ';
         if (loginBox) loginBox.innerHTML = 'UPZ';
         if (sidebarBox) sidebarBox.innerHTML = 'UPZ';
         if (berandaBox) {
@@ -1135,6 +1228,55 @@
         if (previewBox) previewBox.innerHTML = 'UPZ';
         if (statusEl) statusEl.textContent = 'Menggunakan logo teks bawaan (UPZ)';
       }
+    }
+
+    let introTimer = null;
+    let introProgressTimer = null;
+
+    function playIntroSplash() {
+      const splash = document.getElementById('intro-splash');
+      const bar = document.getElementById('intro-progress-bar');
+      if (!splash) return;
+      renderAppLogos();
+      splash.classList.remove('hidden', 'opacity-0', 'scale-105', 'pointer-events-none');
+      splash.classList.add('flex');
+      if (bar) bar.style.width = '0%';
+
+      let pct = 0;
+      clearInterval(introProgressTimer);
+      introProgressTimer = setInterval(() => {
+        pct = Math.min(100, pct + 8);
+        if (bar) bar.style.width = pct + '%';
+        if (pct >= 100) clearInterval(introProgressTimer);
+      }, 170);
+
+      clearTimeout(introTimer);
+      introTimer = setTimeout(() => {
+        dismissIntroSplash();
+      }, 2400);
+    }
+
+    function dismissIntroSplash() {
+      const splash = document.getElementById('intro-splash');
+      if (!splash) return;
+      clearTimeout(introTimer);
+      clearInterval(introProgressTimer);
+      splash.classList.add('opacity-0', 'scale-105', 'pointer-events-none');
+      setTimeout(() => {
+        splash.classList.add('hidden');
+        splash.classList.remove('flex');
+      }, 550);
+    }
+
+    function previewIntroSplash() {
+      if (session.role === 'admin') {
+        const itEl = document.getElementById('set-intro-title');
+        const isEl = document.getElementById('set-intro-subtitle');
+        if (itEl && itEl.value.trim()) state.settings.introTitle = itEl.value.trim();
+        if (isEl && isEl.value.trim()) state.settings.introSubtitle = isEl.value.trim();
+        saveState();
+      }
+      playIntroSplash();
     }
 
     onEl('set-app-logo-file', 'change', function (e) {
@@ -1508,12 +1650,18 @@
 
       const galleryEl = document.getElementById('beranda-photo-gallery');
       if (galleryEl) {
+        const isAdmin = session.role === 'admin';
         const photos = Array.isArray(state.settings.photos) && state.settings.photos.length
           ? state.settings.photos
           : DEFAULT_STATE.settings.photos;
         galleryEl.innerHTML = photos.map((p, idx) => `
-          <figure class="group rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-50 ${photos.length === 3 && idx === 2 ? 'col-span-2 sm:col-span-1' : ''}">
+          <figure class="relative group rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-50 ${photos.length === 3 && idx === 2 ? 'col-span-2 sm:col-span-1' : ''}">
             <img src="${escapeHtml(p.url)}" onerror="this.onerror=null;this.src='https://placehold.co/400x280/312e81/ffffff?text=Foto+UPZ';" alt="${escapeHtml(p.title || 'Dokumentasi UPZ')}" class="w-full h-24 sm:h-28 object-cover group-hover:scale-105 transition duration-300" />
+            ${isAdmin ? `
+              <button type="button" onclick="deleteGalleryPhoto(${idx})" title="Hapus foto" class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-lg bg-rose-600/90 hover:bg-rose-700 text-white text-[10px] font-bold shadow">
+                Hapus
+              </button>
+            ` : ''}
             <figcaption class="px-2.5 py-1.5 text-[11px] font-bold text-slate-700 truncate">${escapeHtml(p.title || `Foto ${idx + 1}`)}</figcaption>
           </figure>
         `).join('');
@@ -2057,9 +2205,14 @@
               <p class="text-xs font-semibold text-indigo-700 mt-0.5">NIM: ${escapeHtml(m.nim)} • ${escapeHtml(m.prodi)}</p>
             </div>
             ${isAdmin ? `
-              <button type="button" onclick="event.stopPropagation(); openMemberModal('${m.id}')" class="px-3 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold">
-                Edit Akun & Jadwal
-              </button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="event.stopPropagation(); openMemberModal('${m.id}')" class="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold">
+                  Edit
+                </button>
+                <button type="button" onclick="event.stopPropagation(); deleteMember('${m.id}')" class="px-2.5 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold">
+                  Hapus
+                </button>
+              </div>
             ` : ''}
           </div>
           <div class="mt-3 pt-3 border-t border-slate-100 text-xs space-y-1">
@@ -2076,6 +2229,56 @@
           </div>
         </div>
       `).join('');
+    }
+
+    function deleteMember(id) {
+      if (session.role !== 'admin') return;
+      state.members = state.members.filter(m => m.id !== id);
+      state.attendance = state.attendance.filter(a => a.memberId !== id);
+      state.bills = state.bills.filter(b => b.memberId !== id);
+      saveState();
+      populateBillMemberSelect();
+      renderMembers();
+      renderBills();
+      renderAdminRekap();
+      renderBeranda();
+      showToast('Data mahasiswa & akun terkait berhasil dihapus.');
+    }
+
+    function deleteGalleryPhoto(index) {
+      if (session.role !== 'admin') return;
+      if (!Array.isArray(state.settings.photos)) return;
+      state.settings.photos.splice(index, 1);
+      if (!state.settings.photos.length) {
+        state.settings.photos = [...DEFAULT_STATE.settings.photos];
+      }
+      saveState();
+      renderBeranda();
+      renderSettingsForm();
+      showToast('Foto galeri dihapus.');
+    }
+
+    function resetDefaultPhotos() {
+      if (session.role !== 'admin') return;
+      state.settings.photos = [...DEFAULT_STATE.settings.photos];
+      const inputEl = document.getElementById('set-photo-files');
+      if (inputEl) inputEl.value = '';
+      saveState();
+      renderBeranda();
+      renderSettingsForm();
+      showToast('Galeri foto dikembalikan ke foto bawaan.');
+    }
+
+    function clearCustomVideo() {
+      if (session.role !== 'admin') return;
+      state.settings.videoUrl = '';
+      state.settings.videoName = '';
+      const inputEl = document.getElementById('set-video-file');
+      if (inputEl) inputEl.value = '';
+      saveState();
+      renderSettingsForm();
+      ensureAutoVideoPlays();
+      showToast('Video kustom dihapus, kembali ke video bawaan.');
     }
 
     function renderProfil() {
@@ -2219,6 +2422,8 @@
     });
 
     function renderSettingsForm() {
+      const introTEl = document.getElementById('set-intro-title');
+      const introSEl = document.getElementById('set-intro-subtitle');
       const tEl = document.getElementById('set-beranda-title');
       const bEl = document.getElementById('set-beranda-body');
       const aEl = document.getElementById('set-kop-address');
@@ -2230,6 +2435,8 @@
       renderAppLogos();
       renderPresensiAccessControl();
 
+      if (introTEl) introTEl.value = state.settings.introTitle || DEFAULT_STATE.settings.introTitle;
+      if (introSEl) introSEl.value = state.settings.introSubtitle || DEFAULT_STATE.settings.introSubtitle;
       if (tEl) tEl.value = state.settings.berandaTitle || '';
       if (bEl) bEl.value = state.settings.berandaBody || '';
       if (aEl) aEl.value = state.settings.kopAddress || '';
@@ -2361,10 +2568,13 @@
     onEl('settings-form', 'submit', function (e) {
       e.preventDefault();
       if (session.role !== 'admin') return;
+      state.settings.introTitle = document.getElementById('set-intro-title')?.value.trim() || DEFAULT_STATE.settings.introTitle;
+      state.settings.introSubtitle = document.getElementById('set-intro-subtitle')?.value.trim() || DEFAULT_STATE.settings.introSubtitle;
       state.settings.berandaTitle = document.getElementById('set-beranda-title')?.value.trim() || DEFAULT_STATE.settings.berandaTitle;
       state.settings.berandaBody = document.getElementById('set-beranda-body')?.value.trim() || DEFAULT_STATE.settings.berandaBody;
       state.settings.kopAddress = document.getElementById('set-kop-address')?.value.trim() || DEFAULT_STATE.settings.kopAddress;
       saveState();
+      renderAppLogos();
       renderBeranda();
       renderSettingsForm();
       showToast('Setelan berhasil disimpan.');
@@ -2583,6 +2793,7 @@
     }
 
     renderAll();
+    playIntroSplash();
   </script>
 </body>
 </html>
