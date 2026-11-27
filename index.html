@@ -778,14 +778,14 @@
     const PRESENSI_LOCK_KEY = 'upz_unpam_presensi_open';
     const CLOUD_CONFIG_KEY = 'upz_unpam_cloud_cfg_v2';
 
-    // Konfigurasi Firebase bawaan (permanen) agar semua perangkat langsung terhubung ke Cloud
     const DEFAULT_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyDummyKeyUpzUnpam31ffb",
+      apiKey: "AIzaSyCQmTVgx7frxp9iETjKTdrWEwXaOBjEcCc",
       authDomain: "upzunpam-31ffb.firebaseapp.com",
       projectId: "upzunpam-31ffb",
-      storageBucket: "upzunpam-31ffb.appspot.com",
-      messagingSenderId: "000000000000",
-      appId: "1:000000000000:web:upzunpam31ffb"
+      storageBucket: "upzunpam-31ffb.firebasestorage.app",
+      messagingSenderId: "385797430673",
+      appId: "1:385797430673:web:4cb7fb54061f510b248e30",
+      measurementId: "G-NVXBMQSBRE"
     };
 
     const SINGLE_ADMIN = {
@@ -968,7 +968,14 @@
       } catch (e) {}
 
       let rawCfg = localStorage.getItem(CLOUD_CONFIG_KEY);
-      if (!rawCfg && DEFAULT_FIREBASE_CONFIG && DEFAULT_FIREBASE_CONFIG.projectId) {
+      const hasValidDefault =
+        DEFAULT_FIREBASE_CONFIG &&
+        DEFAULT_FIREBASE_CONFIG.projectId &&
+        DEFAULT_FIREBASE_CONFIG.apiKey &&
+        !DEFAULT_FIREBASE_CONFIG.apiKey.includes('TEMPEL_API_KEY') &&
+        !DEFAULT_FIREBASE_CONFIG.apiKey.includes('DummyKey');
+
+      if (!rawCfg && hasValidDefault) {
         rawCfg = JSON.stringify(DEFAULT_FIREBASE_CONFIG);
       }
 
@@ -982,6 +989,10 @@
 
       try {
         const cfg = JSON.parse(rawCfg);
+        if (!cfg.apiKey || cfg.apiKey.includes('TEMPEL_API_KEY') || cfg.apiKey.includes('DummyKey')) {
+          updateCloudBadges(false);
+          return;
+        }
         if (!firebase.apps.length) firebase.initializeApp(cfg);
         cloudDb = firebase.firestore();
         cloudConnected = true;
@@ -1262,6 +1273,19 @@
         }
 
         const merged = mergeParsedState(parsed);
+        // Bersihkan URL blob: lama yang kedaluwarsa agar tidak memicu GET blob:... net::ERR_FILE_NOT_FOUND
+        if (typeof merged.settings.videoUrl === 'string' && merged.settings.videoUrl.startsWith('blob:')) {
+          merged.settings.videoUrl = '';
+          merged.settings.videoName = '';
+        }
+        if (Array.isArray(merged.settings.photos)) {
+          merged.settings.photos = merged.settings.photos.filter(
+            p => p && typeof p.url === 'string' && !p.url.startsWith('blob:')
+          );
+          if (!merged.settings.photos.length) {
+            merged.settings.photos = [...DEFAULT_STATE.settings.photos];
+          }
+        }
         if (lockFlag === 'false') {
           merged.settings.attendanceOpen = false;
         } else if (lockFlag === 'true') {
@@ -1731,6 +1755,10 @@
     function ensureAutoVideoPlays() {
       const vid = document.getElementById('beranda-auto-video');
       if (!vid) return;
+      if (typeof state.settings.videoUrl === 'string' && state.settings.videoUrl.startsWith('blob:')) {
+        state.settings.videoUrl = '';
+        state.settings.videoName = '';
+      }
       const targetSrc = state.settings.videoUrl || createFallbackVideoDataUrl();
       if (vid.getAttribute('src') !== targetSrc) {
         vid.setAttribute('src', targetSrc);
@@ -1807,13 +1835,24 @@
       if (session.role !== 'admin') return;
       const file = e.target?.files?.[0];
       if (!file) return;
-      const objectUrl = URL.createObjectURL(file);
-      state.settings.videoUrl = objectUrl;
-      state.settings.videoName = file.name;
-      saveState();
-      renderSettingsForm();
-      ensureAutoVideoPlays();
-      updateVideoAudioButton();
+      if (file.size > 3.5 * 1024 * 1024) {
+        showToast('Ukuran video maksimal 3.5 MB agar tersimpan permanen & tidak error saat dimuat ulang.');
+        this.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function () {
+        if (typeof reader.result === 'string') {
+          state.settings.videoUrl = reader.result;
+          state.settings.videoName = file.name;
+          saveState();
+          renderSettingsForm();
+          ensureAutoVideoPlays();
+          updateVideoAudioButton();
+          showToast('Video berhasil disimpan permanen.');
+        }
+      };
+      reader.readAsDataURL(file);
     });
 
     function renderBeranda() {
