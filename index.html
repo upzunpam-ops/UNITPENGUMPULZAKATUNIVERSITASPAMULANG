@@ -672,11 +672,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 space-y-2">
                     <div class="flex items-center justify-between gap-2">
-                      <label for="set-video-file" class="block text-xs font-bold text-slate-700">File Video Otomatis (MP4/WebM)</label>
+                      <label for="set-video-file" class="block text-xs font-bold text-slate-700">File Video Otomatis (MP4/WebM, Maks. 100 MB)</label>
                       <button type="button" onclick="clearCustomVideo()" class="text-[11px] font-bold text-rose-600 hover:underline">Hapus Video</button>
                     </div>
                     <input type="file" id="set-video-file" accept="video/*" class="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                    <p id="set-video-status" class="text-[11px] text-slate-500 truncate">Menggunakan video bawaan</p>
+                    <p id="set-video-status" class="text-[11px] text-slate-500 truncate">Menggunakan video bawaan (Maks. 100 MB)</p>
                   </div>
                   <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 space-y-2">
                     <div class="flex items-center justify-between gap-2">
@@ -906,6 +906,69 @@
     let cloudConnected = false;
     let cloudErrorReason = '';
     let cloudUnsubscribe = null;
+    let cachedCustomVideoObjectUrl = '';
+    const VIDEO_IDB_NAME = 'upz_unpam_media_db';
+    const VIDEO_IDB_STORE = 'videos';
+
+    function openVideoMediaDb() {
+      return new Promise((resolve, reject) => {
+        if (typeof indexedDB === 'undefined') {
+          reject(new Error('IndexedDB tidak didukung'));
+          return;
+        }
+        const req = indexedDB.open(VIDEO_IDB_NAME, 1);
+        req.onupgradeneeded = function (ev) {
+          const db = ev.target.result;
+          if (!db.objectStoreNames.contains(VIDEO_IDB_STORE)) {
+            db.createObjectStore(VIDEO_IDB_STORE);
+          }
+        };
+        req.onsuccess = function () {
+          resolve(req.result);
+        };
+        req.onerror = function () {
+          reject(req.error);
+        };
+      });
+    }
+
+    async function saveCustomVideoBlobToDb(blob, fileName) {
+      const db = await openVideoMediaDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(VIDEO_IDB_STORE, 'readwrite');
+        tx.objectStore(VIDEO_IDB_STORE).put({ blob, fileName, savedAt: Date.now() }, 'beranda_video');
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function loadCustomVideoBlobFromDb() {
+      try {
+        const db = await openVideoMediaDb();
+        return await new Promise((resolve) => {
+          const tx = db.transaction(VIDEO_IDB_STORE, 'readonly');
+          const req = tx.objectStore(VIDEO_IDB_STORE).get('beranda_video');
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function deleteCustomVideoBlobFromDb() {
+      try {
+        const db = await openVideoMediaDb();
+        return await new Promise((resolve) => {
+          const tx = db.transaction(VIDEO_IDB_STORE, 'readwrite');
+          tx.objectStore(VIDEO_IDB_STORE).delete('beranda_video');
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
+      } catch (e) {
+        return false;
+      }
+    }
 
     const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('upz_unpam_sync') : null;
     if (syncChannel) {
@@ -1803,26 +1866,47 @@
     function ensureAutoVideoPlays() {
       const vid = document.getElementById('beranda-auto-video');
       if (!vid) return;
-      if (typeof state.settings.videoUrl === 'string' && state.settings.videoUrl.startsWith('blob:')) {
+      if (typeof state.settings.videoUrl === 'string' && state.settings.videoUrl.startsWith('blob:') && state.settings.videoUrl !== cachedCustomVideoObjectUrl) {
         state.settings.videoUrl = '';
-        state.settings.videoName = '';
       }
-      const targetSrc = state.settings.videoUrl || createFallbackVideoDataUrl();
-      if (vid.getAttribute('src') !== targetSrc) {
-        vid.setAttribute('src', targetSrc);
-        vid.load();
+
+      const playTarget = (targetSrc) => {
+        if (vid.getAttribute('src') !== targetSrc) {
+          vid.setAttribute('src', targetSrc);
+          vid.load();
+        }
+        vid.volume = 1;
+        vid.muted = !videoSoundEnabled;
+        const playPromise = vid.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {
+            vid.muted = true;
+            updateVideoAudioButton();
+            vid.play().catch(() => {});
+          });
+        }
+        updateVideoAudioButton();
+      };
+
+      if (cachedCustomVideoObjectUrl) {
+        playTarget(cachedCustomVideoObjectUrl);
+        return;
       }
-      vid.volume = 1;
-      vid.muted = !videoSoundEnabled;
-      const playPromise = vid.play();
-      if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(() => {
-          vid.muted = true;
-          updateVideoAudioButton();
-          vid.play().catch(() => {});
+
+      if (state.settings.videoStorage === 'indexeddb' || state.settings.videoName) {
+        loadCustomVideoBlobFromDb().then((record) => {
+          if (record && record.blob) {
+            if (cachedCustomVideoObjectUrl) URL.revokeObjectURL(cachedCustomVideoObjectUrl);
+            cachedCustomVideoObjectUrl = URL.createObjectURL(record.blob);
+            playTarget(cachedCustomVideoObjectUrl);
+          } else {
+            playTarget(state.settings.videoUrl || createFallbackVideoDataUrl());
+          }
         });
+        return;
       }
-      updateVideoAudioButton();
+
+      playTarget(state.settings.videoUrl || createFallbackVideoDataUrl());
     }
 
     function updateVideoAudioButton() {
@@ -1879,28 +1963,33 @@
       updateVideoAudioButton();
     });
 
-    onEl('set-video-file', 'change', function (e) {
+    onEl('set-video-file', 'change', async function (e) {
       if (session.role !== 'admin') return;
       const file = e.target?.files?.[0];
       if (!file) return;
-      if (file.size > 3.5 * 1024 * 1024) {
-        showToast('Ukuran video maksimal 3.5 MB agar tersimpan permanen & tidak error saat dimuat ulang.');
+      const maxBytes = 100 * 1024 * 1024;
+      if (file.size > maxBytes) {
+        showToast('Ukuran video melebihi batas maksimal 100 MB.');
         this.value = '';
         return;
       }
-      const reader = new FileReader();
-      reader.onload = function () {
-        if (typeof reader.result === 'string') {
-          state.settings.videoUrl = reader.result;
-          state.settings.videoName = file.name;
-          saveState();
-          renderSettingsForm();
-          ensureAutoVideoPlays();
-          updateVideoAudioButton();
-          showToast('Video berhasil disimpan permanen.');
+      try {
+        await saveCustomVideoBlobToDb(file, file.name);
+        if (cachedCustomVideoObjectUrl) {
+          URL.revokeObjectURL(cachedCustomVideoObjectUrl);
         }
-      };
-      reader.readAsDataURL(file);
+        cachedCustomVideoObjectUrl = URL.createObjectURL(file);
+        state.settings.videoUrl = '';
+        state.settings.videoStorage = 'indexeddb';
+        state.settings.videoName = `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+        saveState();
+        renderSettingsForm();
+        ensureAutoVideoPlays();
+        updateVideoAudioButton();
+        showToast(`Video berhasil disimpan (${(file.size / (1024 * 1024)).toFixed(1)} MB).`);
+      } catch (err) {
+        showToast('Gagal menyimpan video ke penyimpanan browser.');
+      }
     });
 
     function renderBeranda() {
@@ -2530,7 +2619,13 @@
 
     function clearCustomVideo() {
       if (session.role !== 'admin') return;
+      deleteCustomVideoBlobFromDb();
+      if (cachedCustomVideoObjectUrl) {
+        URL.revokeObjectURL(cachedCustomVideoObjectUrl);
+        cachedCustomVideoObjectUrl = '';
+      }
       state.settings.videoUrl = '';
+      state.settings.videoStorage = '';
       state.settings.videoName = '';
       const inputEl = document.getElementById('set-video-file');
       if (inputEl) inputEl.value = '';
