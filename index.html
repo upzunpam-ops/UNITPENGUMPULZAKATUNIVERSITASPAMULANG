@@ -778,6 +778,16 @@
     const PRESENSI_LOCK_KEY = 'upz_unpam_presensi_open';
     const CLOUD_CONFIG_KEY = 'upz_unpam_cloud_cfg_v2';
 
+    // Konfigurasi Firebase bawaan (permanen) agar semua perangkat langsung terhubung ke Cloud
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDummyKeyUpzUnpam31ffb",
+      authDomain: "upzunpam-31ffb.firebaseapp.com",
+      projectId: "upzunpam-31ffb",
+      storageBucket: "upzunpam-31ffb.appspot.com",
+      messagingSenderId: "000000000000",
+      appId: "1:000000000000:web:upzunpam31ffb"
+    };
+
     const SINGLE_ADMIN = {
       username: 'upz123',
       password: '123upz',
@@ -957,7 +967,11 @@
         }
       } catch (e) {}
 
-      const rawCfg = localStorage.getItem(CLOUD_CONFIG_KEY);
+      let rawCfg = localStorage.getItem(CLOUD_CONFIG_KEY);
+      if (!rawCfg && DEFAULT_FIREBASE_CONFIG && DEFAULT_FIREBASE_CONFIG.projectId) {
+        rawCfg = JSON.stringify(DEFAULT_FIREBASE_CONFIG);
+      }
+
       const cfgBox = document.getElementById('set-firebase-config');
       if (rawCfg && cfgBox) cfgBox.value = rawCfg;
 
