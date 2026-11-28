@@ -168,7 +168,7 @@
           <button type="button" id="nav-rekap" data-tab="rekap" onclick="switchTab('rekap')" class="nav-item hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold text-slate-700 hover:bg-slate-100 text-left transition">
             <span>📊</span><span>Rekap</span>
           </button>
-          <button type="button" id="nav-dokumen" data-tab="dokumen" onclick="switchTab('dokumen')" class="nav-item hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold text-slate-700 hover:bg-slate-100 text-left transition">
+          <button type="button" id="nav-dokumen" data-tab="dokumen" onclick="switchTab('dokumen')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold text-slate-700 hover:bg-slate-100 text-left transition">
             <span>📁</span><span>Arsip & Dokumen</span>
           </button>
           <button type="button" id="nav-mahasiswa" data-tab="mahasiswa" onclick="switchTab('mahasiswa')" class="nav-item hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold text-slate-700 hover:bg-slate-100 text-left transition">
@@ -489,17 +489,23 @@
         <!-- DATA MAHASISWA -->
         <section id="panel-mahasiswa" class="hidden space-y-5">
           <div id="admin-member-creator" class="hidden glass-card rounded-3xl p-5">
-            <h4 class="text-base font-extrabold text-slate-900 mb-3">Tambah Data Mahasiswa & Akun Login User</h4>
+            <h4 class="text-base font-extrabold text-slate-900 mb-3">Tambah Data Mahasiswa & Akun Login</h4>
             <form id="member-create-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <input type="text" id="mem-name" required placeholder="Nama Lengkap" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
               <input type="text" id="mem-nim" required placeholder="NIM" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
               <input type="text" id="mem-prodi" required placeholder="Program Studi" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
               <input type="text" id="mem-schedule" placeholder="Jadwal Kelas (mis. Senin 08.00)" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-              <input type="text" id="mem-username" required placeholder="Buat Username User" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-              <input type="text" id="mem-password" required placeholder="Buat Password User" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-              <div class="sm:col-span-2 lg:col-span-3 flex justify-end">
+              <input type="text" id="mem-username" required placeholder="Buat Username" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+              <input type="text" id="mem-password" required placeholder="Buat Password" class="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
+              <div>
+                <select id="mem-role" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700">
+                  <option value="user">Role: User (Tampilan User)</option>
+                  <option value="admin">Role: Admin (Tampilan Admin)</option>
+                </select>
+              </div>
+              <div class="sm:col-span-2 flex justify-end items-center">
                 <button type="submit" class="rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2.5 px-5 transition">
-                  + Tambah Mahasiswa & Akun User
+                  + Tambah Mahasiswa & Akun
                 </button>
               </div>
             </form>
@@ -865,13 +871,20 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Username User</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Username</label>
             <input type="text" id="edit-mem-username" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Password User</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Password</label>
             <input type="text" id="edit-mem-password" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
           </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Hak Akses / Tampilan Akun</label>
+          <select id="edit-mem-role" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800">
+            <option value="user">User (Tampilan User)</option>
+            <option value="admin">Admin (Tampilan Admin)</option>
+          </select>
         </div>
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" onclick="closeMemberModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Batal</button>
@@ -997,7 +1010,8 @@
           prodi: 'Teknik Informatika',
           schedule: 'Senin 08.00 - 10.30, Rabu 13.00 - 15.00',
           username: 'user1',
-          password: 'user123'
+          password: 'user123',
+          role: 'user'
         },
         {
           id: 'm2',
@@ -1006,7 +1020,8 @@
           prodi: 'Manajemen',
           schedule: 'Selasa 09.00 - 11.30, Kamis 10.00 - 12.00',
           username: 'user2',
-          password: 'user123'
+          password: 'user123',
+          role: 'user'
         }
       ],
       attendance: [
@@ -1920,10 +1935,11 @@
           m => m.username && m.password && m.username === inputUser && m.password === inputPass
         );
         if (foundMember) {
+          const assignedRole = foundMember.role === 'admin' ? 'admin' : 'user';
           matched = {
             username: foundMember.username,
             password: foundMember.password,
-            role: 'user',
+            role: assignedRole,
             memberId: foundMember.id,
             displayName: foundMember.name
           };
@@ -2025,7 +2041,7 @@
         nameText.textContent = mem ? mem.name : (session.displayName || 'Mahasiswa UPZ');
         navPresensi.classList.remove('hidden');
         navRekap.classList.add('hidden');
-        navDokumen.classList.add('hidden');
+        navDokumen.classList.remove('hidden');
         navMahasiswa.classList.add('hidden');
         navSetelan.classList.add('hidden');
         document.getElementById('admin-marker-box').classList.add('hidden');
@@ -2046,7 +2062,7 @@
     }
 
     function switchTab(tabName) {
-      const adminOnlyTabs = ['rekap', 'dokumen', 'mahasiswa', 'setelan'];
+      const adminOnlyTabs = ['rekap', 'mahasiswa', 'setelan'];
       if (adminOnlyTabs.includes(tabName) && session.role !== 'admin') tabName = 'beranda';
 
       currentTab = tabName;
@@ -3127,6 +3143,7 @@
       const schedule = document.getElementById('mem-schedule')?.value.trim() || 'Belum diatur';
       const username = document.getElementById('mem-username')?.value.trim();
       const password = document.getElementById('mem-password')?.value.trim();
+      const role = document.getElementById('mem-role')?.value === 'admin' ? 'admin' : 'user';
       if (!name || !nim || !prodi || !username || !password) return;
 
       const duplicateUser =
@@ -3138,12 +3155,12 @@
         return;
       }
 
-      state.members.push({ id: 'm_' + Date.now(), name, nim, prodi, schedule, username, password });
+      state.members.push({ id: 'm_' + Date.now(), name, nim, prodi, schedule, username, password, role });
       saveState();
       this.reset();
       populateBillMemberSelect();
       renderMembers();
-      showToast('Data mahasiswa & akun login User dibuat.');
+      showToast(`Data & akun ${role === 'admin' ? 'Admin' : 'User'} berhasil dibuat.`);
     });
 
     function renderMembers() {
@@ -3151,11 +3168,18 @@
       const isAdmin = session.role === 'admin';
       const list = isAdmin ? state.members : state.members.filter(m => m.id === session.memberId);
 
-      wrap.innerHTML = list.map(m => `
+      wrap.innerHTML = list.map(m => {
+        const memRole = m.role === 'admin' ? 'admin' : 'user';
+        return `
         <div onclick="${isAdmin ? `openMemberModal('${m.id}')` : ''}" class="glass-card rounded-3xl p-5 ${isAdmin ? 'cursor-pointer hover:border-indigo-300 transition' : ''}">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <h5 class="text-base font-extrabold text-slate-900">${escapeHtml(m.name)}</h5>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h5 class="text-base font-extrabold text-slate-900">${escapeHtml(m.name)}</h5>
+                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${memRole === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-teal-50 text-teal-700'}">
+                  ${memRole === 'admin' ? 'Admin' : 'User'}
+                </span>
+              </div>
               <p class="text-xs font-semibold text-indigo-700 mt-0.5">NIM: ${escapeHtml(m.nim)} • ${escapeHtml(m.prodi)}</p>
             </div>
             ${isAdmin ? `
@@ -3176,13 +3200,14 @@
             </div>
             ${isAdmin ? `
               <div>
-                <span class="font-bold text-slate-600">Akun User:</span>
+                <span class="font-bold text-slate-600">Akun Login (${memRole === 'admin' ? 'Admin' : 'User'}):</span>
                 <span class="text-teal-800 font-semibold ml-1">${escapeHtml(m.username)} / ${escapeHtml(m.password)}</span>
               </div>
             ` : ''}
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function deleteMember(id) {
@@ -3337,6 +3362,8 @@
       document.getElementById('edit-mem-schedule').value = m.schedule || '';
       document.getElementById('edit-mem-username').value = m.username || '';
       document.getElementById('edit-mem-password').value = m.password || '';
+      const roleSelect = document.getElementById('edit-mem-role');
+      if (roleSelect) roleSelect.value = m.role === 'admin' ? 'admin' : 'user';
       const modal = document.getElementById('member-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -3373,12 +3400,13 @@
       m.schedule = document.getElementById('edit-mem-schedule')?.value.trim() || '';
       m.username = nextUsername;
       m.password = nextPassword;
+      m.role = document.getElementById('edit-mem-role')?.value === 'admin' ? 'admin' : 'user';
       saveState();
       closeMemberModal();
       populateBillMemberSelect();
       renderMembers();
       renderBills();
-      showToast('Data mahasiswa, jadwal kelas & akun login diperbarui.');
+      showToast(`Data mahasiswa & hak akses (${m.role === 'admin' ? 'Admin' : 'User'}) diperbarui.`);
     });
 
     function renderSettingsForm() {
